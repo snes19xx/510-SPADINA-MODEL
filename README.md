@@ -4,7 +4,7 @@
 This module establishes the baseline performance metrics (**"Current State"**) for the 510 Spadina streetcar. [cite_start]It ingests raw TTC data to empirically derive travel time distributions and headway variability, forming the control group for the intervention simulations[cite: 142].
 
 ## 1. Baseline Travel Time Calculation
-- [cite_start]**Source:** TTC GTFS static data (`stop_times.txt`, `trips.txt`)[cite: 142].
+- **Source:** TTC GTFS static data [Link](https://open.toronto.ca/dataset/merged-gtfs-ttc-routes-and-schedules/)
 - **Function:** `calculate_baseline_travel_times()`
 
 This function extracts end-to-end travel times for the 510 route by processing scheduled trip sequences.
@@ -17,10 +17,10 @@ This function extracts end-to-end travel times for the 510 route by processing s
 * **Output:** Returns a NumPy array of valid travel times ($t$) for the simulation engine.
 
 ## 2. Baseline Headway Analysis
-- [cite_start]**Source:** TTC Delay Data (CSV format)[cite: 142].
+- **Source:** TTC Delay Data (CSV format)[LINK](https://open.toronto.ca/dataset/ttc-streetcar-delay-data/).
 - **Function:** `calculate_baseline_headways()`
 
-[cite_start]This function reconstructs the actual spacing between vehicles to quantify the "bunching" phenomenon described in the literature review[cite: 5, 30].
+This function reconstructs the actual spacing between vehicles to quantify the "bunching" phenomenon described in the literature review[cite: 5, 30].
 
 ### Key Processes:
 * **Time-Difference Calculation:** Sorts historical delay incidents by `DateTime` and calculates the delta ($\Delta t$) between consecutive log entries.

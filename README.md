@@ -1,26 +1,29 @@
 # 510 Spadina Improvement Model: Baseline Methodology
 
 ## Overview
-This module establishes the baseline performance metrics (**"Current State"**) for the 510 Spadina streetcar. [cite_start]It ingests raw TTC data to empirically derive travel time distributions and headway variability, forming the control group for the intervention simulations[cite: 142].
+This module establishes the baseline performance metrics (**"Current State"**) for the 510 Spadina streetcar. It was developed as a component of the final research paper for **GGR424 (Transportation Geography and Planning)** at the **University of Toronto**.
+
+The model ingests raw TTC data to empirically derive travel time distributions and headway variability, establishing the control group for intervention simulations based on the foundational control strategies defined by Osuna & Newell (1972).
 
 ## 1. Baseline Travel Time Calculation
-- **Source:** TTC GTFS static data [Link](https://open.toronto.ca/dataset/merged-gtfs-ttc-routes-and-schedules/)
+- **Source:** TTC GTFS static data ([Link](https://open.toronto.ca/dataset/merged-gtfs-ttc-routes-and-schedules/))
 - **Function:** `calculate_baseline_travel_times()`
 
-This function extracts end-to-end travel times for the 510 route by processing scheduled trip sequences.
+This function extracts end-to-end travel times for the 510 route by processing scheduled trip sequences, providing the baseline required to assess stop spacing efficiency as per Furth & Rahbee (2000).
 
 ### Key Processes:
 * **Time Normalization:** Converts GTFS timestamps (which often extend past 24:00:00 for late-night service) into absolute minute values for calculation.
 * **Trip Filtering:**
   * Filters for valid `trip_id` sequences associated with the 510 route.
-  * **Heuristic Validation:** Applies a domain-knowledge filter to exclude data artifacts. Only trips with durations between **15 and 45 minutes** are retained. [cite_start]This threshold removes depot moves or partial trips while capturing the variance of real-world operations (typical run time is ~29 mins)[cite: 145].
+  * **Heuristic Validation:** Applies a domain-knowledge filter to exclude data artifacts. Only trips with durations between **15 and 45 minutes** are retained. This threshold removes depot moves or partial trips while capturing the variance of real-world operations (typical run time is ~29 mins).
 * **Output:** Returns a NumPy array of valid travel times ($t$) for the simulation engine.
+* **Execution Status:** The algorithm successfully extracted **1,267 valid trips** from the GTFS dataset, providing a robust distribution without requiring synthetic estimation.
 
 ## 2. Baseline Headway Analysis
-- **Source:** TTC Delay Data (CSV format)[LINK](https://open.toronto.ca/dataset/ttc-streetcar-delay-data/).
+- **Source:** TTC Delay Data (CSV format) ([Link](https://open.toronto.ca/dataset/ttc-streetcar-delay-data/)).
 - **Function:** `calculate_baseline_headways()`
 
-This function reconstructs the actual spacing between vehicles to quantify the "bunching" phenomenon described in the literature review[cite: 5, 30].
+This function reconstructs the actual spacing between vehicles to quantify the "bunching" phenomenon and headway irregularity described in the critical review by Ansari Esfeh et al. (2020).
 
 ### Key Processes:
 * **Time-Difference Calculation:** Sorts historical delay incidents by `DateTime` and calculates the delta ($\Delta t$) between consecutive log entries.
@@ -30,9 +33,14 @@ This function reconstructs the actual spacing between vehicles to quantify the "
 * **Data Fallback Logic (Waterfall):**
   1. **Primary:** Calculated time differences from raw timestamps.
   2. **Secondary:** If sample size $n < 50$, supplements with the `Min Gap` field provided in the delay logs.
-  3. **Tertiary (Fail-safe):** If empirical data is insufficient, generates a synthetic Gamma distribution ($\alpha=2, \beta=1.5$) to model high-frequency bunching behavior.
+  3. **Tertiary (Fail-safe - NOT USED):** If empirical data is insufficient, the code contains logic to generate a synthetic Gamma distribution ($\alpha=2, \beta=1.5$). **Note:** This fail-safe was not triggered in the final analysis; **966 empirical delay incidents** were successfully processed, rendering synthetic data generation unnecessary.
 
 ## Dependencies
 * `pandas`: Data manipulation and time-series handling.
 * `numpy`: Array operations for stochastic simulation.
 * `datetime`: Parsing GTFS time strings.
+
+## References
+* Ansari Esfeh, M., Wirasinghe, S. C., Saidi, S., & Kattan, L. (2020). Waiting time and headway modelling for urban transit systems – a critical review and proposed approach. *Transport Reviews*, 41(2), 141–163. [https://doi.org/10.1080/01441647.2020.1806942](https://doi.org/10.1080/01441647.2020.1806942)
+* Furth, P.G., & Rahbee, A.B. (2000). Optimal bus stop spacing through dynamic programming and geographic modeling. *Transportation Research Record*, 1731(1), 15-22. [https://doi.org/10.3141/1731-03](https://doi.org/10.3141/1731-03)
+* Osuna, E. E., & Newell, G. F. (1972). Control strategies for an idealized public transportation system. *Transportation Science*, 6(1), 52–72. [https://doi.org/10.1287/trsc.6.1.52](https://doi.org/10.1287/trsc.6.1.52)

@@ -3,8 +3,7 @@
 ## Overview
 This simulation model quantifies the cumulative impact of three proposed operational interventions on the 510 Spadina streetcar route:
 
-Stop Consolidation 
-- Reducing 5 stops.
+- Stop Consolidation - Reducing 5 stops.
 - Transit Signal Priority (TSP)- Implementing conditional signal priority
 Headway-Based Operations
 - Shifting from schedule-based to headway-based control

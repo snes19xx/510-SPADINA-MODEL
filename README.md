@@ -1,84 +1,87 @@
-# 510 Spadina Improvement Model: Baseline Methodology
+![Screenshot](assets/screenshot.png)
 
-## Overview
-This simulation model quantifies the cumulative impact of three proposed operational interventions on the 510 Spadina streetcar route:
+# Rebuilding the 510 Spadina from its own data
 
-- Stop Consolidation - Reducing 5 stops.
-- Transit Signal Priority (TSP)- Implementing conditional signal priority
-Headway-Based Operations
-- Shifting from schedule-based to headway-based control
+A calibrated simulation of Toronto's 510 Spadina streetcar, built from the line's own
+published schedule and delay records, paired with an interactive editorial webapp that replays
+what the model produced. The question it answers: how much faster and more reliable could the
+510 be if we changed how it is run rather than what it is built from.
 
-The model uses an empirical perturbation approach, applying documented performance improvements from transit literature to observed baseline data from Toronto Transit Commission (TTC) operations.
+The headline result, measured across 400 simulated PM peaks: three operating changes make the
+line meaningfully faster and about **67% more reliable**, cutting the variability in the gap
+between cars (headway CV) from 0.47 to 0.15.
 
-## 1. Baseline Travel Time Calculation
-- **Source:** TTC GTFS static data ([Link](https://open.toronto.ca/dataset/merged-gtfs-ttc-routes-and-schedules/))
-- **Function:** `calculate_baseline_travel_times()`
+## How it works
 
-This function extracts end-to-end travel times for the 510 route by processing scheduled trip sequences, providing the baseline required to assess stop spacing efficiency as per Furth & Rahbee (2000).
+The core is a mechanistic simulation, not a curve fit. Cars run down the corridor one after
+another, riders arrive at each stop at a steady rate, and the number waiting when a car pulls
+in sets its dwell. A car that falls slightly behind picks up slightly more riders, dwells
+slightly longer, and falls further behind, while the car behind catches up. Because streetcars
+share one track and cannot pass, they then travel as a bunch. Nothing in the model decides that
+the line is slow or clumpy: that behaviour emerges from the mechanics alone.
 
-### Key Processes:
-* **Time Normalization:** Converts GTFS timestamps (which often extend past 24:00:00 for late-night service) into absolute minute values for calculation.
-* **Trip Filtering:**
-  * Filters for valid `trip_id` sequences associated with the 510 route.
-  * **Heuristic Validation:** Applies a domain-knowledge filter to exclude data artifacts. Only trips with durations between **15 and 45 minutes** are retained. This threshold removes depot moves or partial trips while capturing the variance of real-world operations (typical run time is ~29 mins).
-* **Output:** Returns a NumPy array of valid travel times ($t$) for the simulation engine.
-* **Execution Status:** The algorithm successfully extracted **1,267 valid trips** from the GTFS dataset, providing a robust distribution without requiring synthetic estimation.
+The baseline is calibrated to two facts measured independently from the data: the scheduled end
+to end run time (about 29 minutes) and the headway variability seen in the delay logs. Only
+then are three changes applied, each acting on the mechanism and never on the result:
 
-## 2. Baseline Headway Analysis
-- **Source:** TTC Delay Data (CSV format) ([Link](https://open.toronto.ca/dataset/ttc-streetcar-delay-data/)).
-- **Function:** `calculate_baseline_headways()`
+- **Stop consolidation**, removing five stops that sit too close together.
+- **Conditional signal priority**, giving late cars a green at signals.
+- **Headway holding**, dispatching to an even gap instead of a clock.
 
-This function reconstructs the actual spacing between vehicles to quantify the "bunching" phenomenon and headway irregularity described in the critical review by Ansari Esfeh et al. (2020).
+Every scenario is run as a 400 replication Monte Carlo ensemble, so each reported number carries
+a confidence interval. The simulation is the single source of truth: the webapp does not
+re-implement any of it, it replays an exported sample of genuine runs.
 
-### Key Processes:
-* **Time-Difference Calculation:** Sorts historical delay incidents by `DateTime` and calculates the delta ($\Delta t$) between consecutive log entries.
-* **Noise Filtering:**
-  * **Lower Bound (0.5 min):** Removes duplicate entries or simultaneous reports.
-  * **Upper Bound (15 min):** Excludes major service gaps or prolonged disruptions that do not represent standard headway variance.
-* **Data Fallback Logic (Waterfall):**
-  1. **Primary:** Calculated time differences from raw timestamps.
-  2. **Secondary:** If sample size $n < 50$, supplements with the `Min Gap` field provided in the delay logs.
-  3. **Tertiary (Fail-safe - NOT USED):** If empirical data is insufficient, the code contains logic to generate a synthetic Gamma distribution ($\alpha=2, \beta=1.5$). **Note:** This fail-safe was not triggered in the final analysis; **966 empirical delay incidents** were successfully processed, rendering synthetic data generation unnecessary.
+### The model package (`src/`)
 
-## Dependencies
-* `pandas`: Data manipulation and time-series handling.
-* `numpy`: Array operations for stochastic simulation.
-* `datetime`: Parsing GTFS time strings.
+`config.py` centralizes every constant and path. `geometry.py` rebuilds the corridor from the
+real GTFS `stops.txt` and `shapes.txt`. `data.py` loads and cleans the delay records and the
+schedule. `simulation.py` is the mechanistic core; `calibrate.py` tunes the baseline to the
+measured targets; `interventions.py` defines the three changes; `monte_carlo.py` runs the
+ensemble; `export.py` writes `route.json` and `sim.json` into `assets/`.
 
-## References
-* Ansari Esfeh, M., Wirasinghe, S. C., Saidi, S., & Kattan, L. (2020). Waiting time and headway modelling for urban transit systems – a critical review and proposed approach. *Transport Reviews*, 41(2), 141–163. [https://doi.org/10.1080/01441647.2020.1806942](https://doi.org/10.1080/01441647.2020.1806942)
-* Furth, P.G., & Rahbee, A.B. (2000). Optimal bus stop spacing through dynamic programming and geographic modeling. *Transportation Research Record*, 1731(1), 15-22. [https://doi.org/10.3141/1731-03](https://doi.org/10.3141/1731-03)
-* Osuna, E. E., & Newell, G. F. (1972). Control strategies for an idealized public transportation system. *Transportation Science*, 6(1), 52–72. [https://doi.org/10.1287/trsc.6.1.52](https://doi.org/10.1287/trsc.6.1.52)
+## Running it locally
 
-## Model Outputs
-Below are the visual outputs generated by the simulation model, illustrating the projected improvements in travel time and headway regularity.
+```bash
+# 1. regenerate the webapp data from the model
+python notebooks/export_webapp.py
 
-![Travel Time CDF](a.png)
+# 2. rebuild and render the article that sits in the right-hand panel
+python notebooks/render_html.py
 
+# 3. serve the site from the repository root with any static server
+python -m http.server 8000
+#    then open http://localhost:8000
+```
 
-![Headway Analysis](b.png)
+The page is plain static files: three.js, d3 and the GLTF and OrbitControls add-ons load as ES
+modules from a CDN through the import map, so there is no build step.
 
+## Built with
 
-![Delay Patterns](c.png)
+- [three.js](https://threejs.org/) for the 2.5D diorama and the 3D streetcar model
+- [D3](https://d3js.org/) for the reliability chart
+- Python (numpy, pandas) for the simulation, calibration and export
+- Jupyter and nbconvert for the article
 
-## Model Limitations
+## Data sources
 
-### Does Not Model:
-* Real-time passenger demand fluctuations
-* Weather impacts on dwell times
-* Construction or special event disruptions
-* Driver behavior variability
+The corridor and calibration are built from the City of Toronto and TTC open data: the TTC GTFS
+feed (route shapes and the schedule) and the TTC streetcar delay records.
 
-### Simplifications:
-* Assumes perfect TSP implementation (no signal coordination failures)
-* Ignores potential ridership changes from service improvements
+## Acknowledgements
 
-### Data Constraints:
-* Delay data may under-represent minor incidents
-* GTFS represents scheduled times, not actual operations
-* Limited temporal coverage (single year of data)
+### Special, special thanks to Jacob L.
 
-### Generalizability:
-* Model calibrated specifically for 510 Spadina dedicated ROW
-* Results not directly transferable to mixed-traffic routes
-* Requires recalibration for other similar routes
+The 3D streetcar in the diorama is **not my work**. It is a Flexity Outlook model created by
+**Jacob L.** and published on SketchUp 3D Warehouse, and the project would not look the way it
+does without it.
+
+- Model: [TTC new low floor streetcar](https://3dwarehouse.sketchup.com/model/166ee52d5726aab3971e77ca4a254c30/TTC-new-low-floor-streetcar)
+- Author: [Jacob L. on 3D Warehouse](https://3dwarehouse.sketchup.com/user/0872588832337049077703672/Jacob-L)
+
+The file shipped here (`assets/streetcar.glb`) is a merged and decimated derivative of Jacob L.'s
+original model. All credit for the vehicle
+design and modelling belongs to Jacob L., the model remains their work, and it is used here with
+gratitude and full attribution. If you reuse this project, please keep this credit intact and
+respect the original model's 3D Warehouse terms.

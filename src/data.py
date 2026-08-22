@@ -27,8 +27,8 @@ CACHE_DIR = config.ROOT / ".cache"
 def gtfs_minutes(series: pd.Series) -> pd.Series:
     """Convert GTFS clock strings to minutes after midnight.
 
-    GTFS allows times past midnight (e.g. 25:30:00), so hours are parsed manually
-    rather than relying on a time type that would reject hour 25.
+    GTFS allows times past midnight (25:30:00), which a time type would reject, so
+    hours are parsed manually.
     """
     parts = series.astype(str).str.split(":", expand=True).astype(float)
     return parts[0] * 60.0 + parts[1] + parts[2] / 60.0

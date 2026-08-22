@@ -1,7 +1,5 @@
-// Wires the page together: load the model output, build the diorama and the headway panel, and
-// run a clock that replays the simulated peak window on a loop. Each time the window comes
-// round, it swaps in a different genuine run of the 400.
-// There is no scrubber by design; the cars just run, and the Today / Proposed toggle changes.
+// Replays the simulated peak window on a loop, swapping in a different run each time round.
+// No scrubber by design; the cars just run and the Today / Proposed toggle changes.
 
 import { MetricsChart } from "./charts.js";
 import { Diorama } from "./scene.js";
@@ -30,7 +28,6 @@ async function main() {
       getJSON("assets/sim.json"),
     ]);
   } catch (err) {
-    // a failed data load otherwise leaves a silent blank panel; say what happened instead
     console.error("Could not load the model output:", err);
     els.scene.innerHTML =
       '<p style="font:14px/1.5 Inter,sans-serif;color:#6f6a60;padding:24px">' +
@@ -47,8 +44,7 @@ async function main() {
   const chart = new MetricsChart(els.metrics).data(sim.summary);
   chart.draw();
 
-  // Lead the page with the result. pull the reliability gain and the ensemble size straight
-  // from the model output so the dek can never drift from what the simulation produced.
+  // Dek numbers come from the model output so they cannot drift.
   const cv = Object.fromEntries(
     sim.summary.map((r) => [r.scenario, r.headway_cv]),
   );
@@ -60,7 +56,7 @@ async function main() {
   pickRun();
 
   const windowS = sim.window_s;
-  setText("dek-speed", Math.round(windowS / LOOP_SECONDS)); // keep the caption honest to the clock
+  setText("dek-speed", Math.round(windowS / LOOP_SECONDS));
   let tp = 0;
   let playing = true;
   let last = performance.now();
@@ -72,7 +68,7 @@ async function main() {
       tp += dt * (windowS / LOOP_SECONDS);
       if (tp > windowS) {
         tp -= windowS;
-        pickRun(); // a fresh genuine run each time the window comes round
+        pickRun();
       }
     }
     diorama.frame(tp);
@@ -98,7 +94,6 @@ async function main() {
     });
   }
 
-  // pick a different run from the current scenario's set and hand it to the diorama
   function pickRun() {
     const runs = sim.scenarios[mode].runs;
     let i = Math.floor(Math.random() * runs.length);
@@ -112,7 +107,7 @@ async function main() {
     if (el) el.textContent = value;
   }
 
-  // combine resize bursts to one redraw per frame would be not very efficient to redraw
+  // one redraw per frame
   let chartResizePending = false;
   window.addEventListener("resize", () => {
     if (chartResizePending) return;

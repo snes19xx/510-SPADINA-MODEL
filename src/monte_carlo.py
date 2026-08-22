@@ -16,7 +16,7 @@ from . import config, metrics
 from .geometry import Corridor
 from .simulation import Scenario, SimResult, simulate
 
-# Runs kept for the webapp to cycle through; freak tails trimmed, spread across the outcome range.
+# Runs kept for the webapp to cycle through, tails trimmed.
 _WEBAPP_SAMPLE = 24
 
 
@@ -45,12 +45,11 @@ def run_ensemble(corridor: Corridor, params: config.Params, scenario: Scenario,
         run_times.append(res.run_times_min())
         headways.append(res.headways_min())
 
-    # The representative run is the one whose headway spread is closest to the typical run,
-    # so the Marey chart shows a fair day rather than a freak one.
+    # Closest to the typical headway spread, so the Marey chart shows an ordinary day.
     cvs = np.array([m["headway_cv"] for m in per_run])
     rep = results[int(np.argmin(np.abs(cvs - np.median(cvs))))]
 
-    # Spread of real runs ordered calm to clumpy, extreme tails trimmed; the page picks at random.
+    # Ordered calm to clumpy, tails trimmed; the page picks at random.
     order = np.argsort(cvs)
     trim = int(0.05 * n_reps)
     band = order[trim:n_reps - trim] if n_reps > 2 * trim + _WEBAPP_SAMPLE else order
@@ -80,9 +79,8 @@ def sensitivity(corridor: Corridor, params: config.Params, param_name: str,
                 values, scenario: str = "baseline", n_reps: int = 120) -> list[dict]:
     """Sweep one parameter and observe the baseline response.
 
-    Shows the model is not balanced on a knife edge: run time and headway spread move smoothly
-    with demand, noise, or signal behaviour, as expected from an honest mechanism rather than
-    a fitted curve.
+    Run time and headway spread move smoothly with demand, noise and signal behaviour,
+    showing the model is not balanced on a knife edge.
     """
     sc = Scenario.from_name(scenario)
     rows = []

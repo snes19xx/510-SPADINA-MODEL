@@ -1,8 +1,8 @@
 """Write the JSON the webpage replays.
 
-The simulation is the single source of truth. Geometry and a representative run for each
-scenario are exported as time-and-distance keypoints. The page interpolates between them to
-move the cars, so the browser replays exactly what the model produced.
+Geometry and a representative run for each scenario are exported as time-and-distance
+keypoints. The page interpolates between them, so the browser replays what the model
+produced and re-implements none of it.
 """
 
 from __future__ import annotations

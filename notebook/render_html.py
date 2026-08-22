@@ -1,10 +1,7 @@
-"""Render the executed notebook as a clean, self-contained article for the webapp.
+"""Render the executed notebook as a standalone article for the webapp iframe.
 
-Hide the code and the prompts and keep the prose, the figures, the printed results, and the
-results table, then wrap the whole thing in an editorial stylesheet so the right-hand
-panel reads like a printed page rather than a Jupyter export. The figures are already embedded
-as images in the notebook, so the output is a single standalone file I can drop straight into
-an iframe.
+Keeps the prose, figures, printed results and results table; drops the code and prompts.
+Figures are already embedded in the notebook, so the output is a single file.
 """
 
 from __future__ import annotations
@@ -15,7 +12,7 @@ import nbformat
 from nbconvert import HTMLExporter
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-NB = ROOT / "notebooks" / "510_spadina.ipynb"
+NB = ROOT / "notebook" / "510_spadina.ipynb"
 OUT = ROOT / "notebook" / "510_spadina.html"
 
 CSS = """
@@ -30,7 +27,7 @@ CSS = """
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--paper); color: var(--ink); }
 body {
-  font-family: "Newsreader", Georgia, "Times New Roman", serif;
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
   font-size: 18px;
   line-height: 1.68;
   -webkit-font-smoothing: antialiased;
@@ -38,7 +35,7 @@ body {
 .page { max-width: 1100px; margin: 0 auto; padding: 56px 48px 120px; }
 
 h1 {
-  font-family: "Newsreader", Georgia, serif;
+  font-family: "Source Serif 4", Georgia, serif;
   font-weight: 500;
   font-size: 2.35rem;
   line-height: 1.12;
@@ -67,19 +64,16 @@ a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(1
 .rendered_html { color: var(--ink); }
 .text_cell_render p:first-child { margin-top: 0; }
 
-/* the very first paragraph after the title reads as a standfirst */
 h1 + p, h1 + p + p {
   color: var(--muted);
   font-size: 1.12rem;
   line-height: 1.55;
 }
 
-/* figures */
 img, .output_png img { display: block; margin: 1.6rem auto 0.6rem; max-width: 100%; height: auto; }
 .output_subarea { max-width: 100% !important; }
 
-/* printed results read as small monospace asides, set quietly on a faint panel */
-pre, .output_text {
+pre {
   font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.78rem;
   line-height: 1.55;
@@ -92,14 +86,19 @@ pre, .output_text {
   overflow-x: auto;
   white-space: pre-wrap;
 }
-.output_text { border: 0 !important; }
+.output_text {
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  background: none;
+  border: 0 !important;
+  padding: 0;
+  margin: 0;
+}
 
-/* results table */
 table.dataframe {
   border-collapse: collapse;
   margin: 1.8rem auto;
   width: 100%;
-  font-family: "Newsreader", Georgia, serif;
+  font-family: "Source Serif 4", Georgia, serif;
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
 }
@@ -114,7 +113,7 @@ table.dataframe tbody tr:last-child td, table.dataframe tbody tr:last-child th {
   border-bottom: none; color: var(--proposed);
 }
 
-/* hide every trace of the machinery */
+/* hide the Jupyter chrome */
 .prompt, .input_prompt, .output_prompt, .anchor-link { display: none !important; }
 .cell { margin: 0; padding: 0; border: none; }
 .code_cell { margin: 0; }
@@ -130,7 +129,7 @@ HEAD = """<!doctype html>
 <title>510 Spadina</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
 <style>%s</style>
 </head>
 <body><main class="page">%s</main></body>

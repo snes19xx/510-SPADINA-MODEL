@@ -10,7 +10,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-
 # Paths are relative to the repo root so the code runs from any entry point.
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
@@ -22,7 +21,7 @@ DELAY_XLSX_2024 = DATA_DIR / "ttc-streetcar-delay-data-2024.xlsx"
 DELAY_CODES_CSV = DATA_DIR / "delay_data_Code Descriptions.csv"
 
 # Assets at ROOT so GitHub Pages serves index.html directly.
-FIGURE_DIR = ROOT / "notebooks" / "figures"
+FIGURE_DIR = ROOT / "notebook" / "figures"
 WEBAPP_ASSETS = ROOT / "assets"
 SHAPE_ID = "shp-510-56"
 SEED = 20260613
@@ -41,7 +40,7 @@ SEED = 20260613
 #   remove   True if stop consolidation drops it
 #
 # stop_ids and order are read straight from stop_times.txt for a southbound shp-510-56 trip.
-# The scheduled run time on that trip is 29 minutes — the first calibration target.
+# The scheduled run time on that trip is 29 minutes, the first calibration target.
 STOPS: list[dict] = [
     dict(key="spadina_stn", name="Spadina Station", stop_id=3895,  signal=True,  nearside=False, board=1.00, alight=0.30, remove=False),
     dict(key="sussex",      name="Sussex Ave",      stop_id=10453, signal=False, nearside=False, board=0.18, alight=0.10, remove=True),
@@ -80,9 +79,8 @@ class Params:
     alight_time_s: float = 0.35        # seconds added per alighting passenger
     crowd_dwell_factor: float = 0.6    # extra dwell as the car approaches crush load
 
-    # Speed profile: accelerate, maybe reach cruise, brake. On short downtown links the car
-    # rarely reaches cruise speed -- the core reason closely spaced stops are costly.
-    # cruise_speed_kmh is the top operating speed, not the average achieved on a short block.
+    # cruise_speed_kmh is the top operating speed, not the average over a short block.
+    # On short downtown links the car rarely reaches it, which is why close stops cost so much.
     cruise_speed_kmh: float = 42.0     # top operating speed in the right of way
     accel_mps2: float = 0.9            # acceleration of a loaded Flexity car
     decel_mps2: float = 1.2            # service braking
@@ -96,7 +94,7 @@ class Params:
     capacity: int = 250                # Flexity Outlook seated plus standing
     min_following_s: float = 25.0      # a car cannot sit right on top of the one ahead
 
-    # Representative weekday PM peak hour ~35k riders/day
+    # Weekday PM peak hour, ~35k riders/day
     peak_boardings_per_hour: float = 3200.0
 
     target_headway_min: float = 5.0    # scheduled peak frequency
@@ -112,8 +110,7 @@ class Params:
     holding_deadband_s: float = 25.0   # only hold when the gap is meaningfully short
     headway_dispatch_jitter_s: float = 8.0   # terminals hit a target gap far more tightly
 
-    # Conditional TSP (used only when the TSP intervention is on): withheld when bunched or
-    # early, aggressive when lagging. 
+    # Conditional TSP: withheld when bunched or early, aggressive when lagging.
     tsp_stop_prob_helped: float = 0.18     # red-meeting chance once a lagging car gets priority
     tsp_nearside_fix: float = 0.85         # share of the near-side penalty removed by motion-triggered calls
     tsp_bunched_ratio: float = 0.75        # below this share of target headway a car is "bunched", priority withheld

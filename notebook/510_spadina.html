@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Mono:wght@400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=IBM+Plex+Mono:wght@400&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -29,7 +29,7 @@
         color: var(--ink);
       }
       body {
-        font-family: "Newsreader", Georgia, "Times New Roman", serif;
+        font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
         font-size: 18px;
         line-height: 1.68;
         -webkit-font-smoothing: antialiased;
@@ -41,7 +41,7 @@
       }
 
       h1 {
-        font-family: "Newsreader", Georgia, serif;
+        font-family: "Source Serif 4", Georgia, serif;
         font-weight: 500;
         font-size: 2.35rem;
         line-height: 1.12;
@@ -82,7 +82,6 @@
         margin-top: 0;
       }
 
-      /* the very first paragraph after the title reads as a standfirst */
       h1 + p,
       h1 + p + p {
         color: var(--muted);
@@ -90,7 +89,6 @@
         line-height: 1.55;
       }
 
-      /* figures */
       img,
       .output_png img {
         display: block;
@@ -102,8 +100,7 @@
         max-width: 100% !important;
       }
 
-      pre,
-      .output_text {
+      pre {
         font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
         font-size: 0.78rem;
         line-height: 1.55;
@@ -117,15 +114,18 @@
         white-space: pre-wrap;
       }
       .output_text {
+        font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        background: none;
         border: 0 !important;
+        padding: 0;
+        margin: 0;
       }
 
-      /* results table */
       table.dataframe {
         border-collapse: collapse;
         margin: 1.8rem auto;
         width: 100%;
-        font-family: "Newsreader", Georgia, serif;
+        font-family: "Source Serif 4", Georgia, serif;
         font-size: 0.95rem;
         font-variant-numeric: tabular-nums;
       }
@@ -150,7 +150,7 @@
         color: var(--proposed);
       }
 
-      /* hide every trace of the machinery */
+      /* hide the Jupyter chrome */
       .prompt,
       .input_prompt,
       .output_prompt,
@@ -213,9 +213,7 @@
               gap instead of a clock.
             </p>
             <p>
-              Everything below is computed by the code in <code>src/</code>. The
-              notebook only calls it, so the prose and the numbers can never
-              drift apart.
+              Everything below is computed by the code in <code>src/</code>.
             </p>
           </div>
         </div>
@@ -500,8 +498,8 @@ Baseline calibration
               >
             </h2>
             <p>
-              Each change is added on top of the last, so I can see what each
-              one buys.
+              Each change is added on top of the last, so that each's effect is
+              easily apparent.
             </p>
           </div>
         </div>
@@ -556,8 +554,7 @@ Baseline calibration
               Conditional priority is the speed lever; it pulls the whole
               distribution to the left. Stop consolidation helps a little on its
               own. Headway control, by design, gives a small amount of that
-              speed back, because holding an early car costs it time. What
-              headway control buys instead is on the next chart.
+              speed back, because holding an early car costs it time.
             </p>
           </div>
         </div>
@@ -634,8 +631,7 @@ Baseline calibration
             </h3>
             <p>
               Every number below is an average over 400 simulated runs, with a
-              95 percent confidence interval, so both the size of each gain and
-              how sure I am of it are visible.
+              95 percent confidence interval:
             </p>
           </div>
         </div>
@@ -790,7 +786,7 @@ Baseline calibration
         <div class="inner_cell">
           <div class="text_cell_render border-box-sizing rendered_html">
             <h2 id="What-this-captures,-and-what-it-does-not">
-              What this captures, and what it does not<a
+              Model Specifications & Limitations<a
                 class="anchor-link"
                 href="#What-this-captures,-and-what-it-does-not"
                 >¶</a
@@ -798,14 +794,13 @@ Baseline calibration
             </h2>
             <p>
               The model is deliberately a model of one thing: the operating
-              dynamics of a single busy direction in the peak. It earns its keep
-              by reproducing the present-day run time and bunching from
-              mechanism alone, and by showing how three operating changes move
-              them.
+              dynamics of a single busy direction in the peak. It reproduces the
+              present-day run time and bunching from mechanism alone, and by
+              showing how three operating changes move them.
             </p>
             <p>
-              It runs one direction over a representative peak rather than a
-              full service day, it treats boarding as a smooth flow rather than
+              It runs one direction over a representative peak (not a full
+              service day), it treats boarding as a smooth flow rather than
               individual fare taps, and it holds demand fixed instead of letting
               better service attract new riders. Weather, blocked tracks, and
               special-event surges, all of which show up in the delay logs, are
@@ -814,11 +809,10 @@ Baseline calibration
               operating problem, and operating changes fix most of it.
             </p>
             <p>
-              The headline, in plain terms. Consolidating five stops and adding
-              conditional signal priority make the trip meaningfully faster.
-              Dispatching to an even headway is what turns a clumpy,
-              unpredictable line into a reliable one, cutting the variability in
-              spacing by roughly two thirds.
+              Tldr: Consolidating five stops and adding conditional signal
+              priority make the trip meaningfully faster. Dispatching to an even
+              headway is what turns a clumpy, unpredictable line into a reliable
+              one, cutting the variability in spacing by roughly two thirds.
             </p>
           </div>
         </div>

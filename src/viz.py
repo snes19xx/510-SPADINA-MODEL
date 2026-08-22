@@ -235,7 +235,7 @@ def calibration_fit(baseline: Ensemble, save: str | None = "calibration") -> plt
 
 def sensitivity_plot(rows: list[dict], param_label: str, save: str | None = "sensitivity") -> plt.Figure:
     """Run time and headway CV as one parameter is swept, to show the model responds
-    smoothly rather than balancing on a fitted point."""
+    smoothly."""
     v = [r["value"] for r in rows]
     fig, ax = plt.subplots(figsize=(8, 4.6))
     ax.plot(v, [r["run_median"] for r in rows], color=P["baseline"], lw=2.0, marker="o", ms=4,

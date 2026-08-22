@@ -84,7 +84,7 @@ def _solve(f: Callable[[float], float], lo: float, hi: float, target: float,
            iters: int = 14) -> float:
     """Bisection for a monotonic f, either direction. Slope is detected from the bracket ends;
     the result is clamped to the bracket, so if a target sits outside what the knob can reach
-    the closest end is returned — the honest outcome rather than an extrapolation."""
+    the closest end is returned."""
     flo, fhi = f(lo), f(hi)
     increasing = fhi >= flo
     if increasing:

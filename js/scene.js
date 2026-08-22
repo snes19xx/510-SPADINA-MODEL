@@ -1,13 +1,8 @@
-// 2.5D diorama of the 510 Spadina route. Route geometry from route.json is rotated so the
-// Spadina leg runs left-to-right, smoothed into clean curves, and laid flat on a lightly tilted
-// ground. Cars travel rightward along Spadina; at the right end the line bends up to the lake
-// and hooks back to Union. Cars are Flexity Outlook models (it's actually a 501!) oriented to
-// the track tangent so they corner naturally, sized to read well at default framing but scaling
-// with zoom. Every position is replayed from sim.json. Camera supports pan, swing and tilt
-// for exploring, with a double-click reset.
+// 2.5D diorama of the 510 Spadina route.
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const CARD = 0xf0ebe0; // the ground the route sits on
@@ -20,7 +15,7 @@ const TODAY = 0x981616; // TTC red
 const TRAM_PX = 105; // on-screen length of a car
 
 const MODEL_URL = "assets/streetcar.glb"; // the merged Flexity Outlook
-const NOSE_SIGN = 2; //
+const NOSE_SIGN = 2;
 
 const FIT_W = 1000; // world width the Spadina axis is scaled to
 const ROW_HALF = 22; // half width of the right-of-way band, in world units
@@ -37,8 +32,6 @@ const MAJORS = new Set([
   "union",
 ]);
 
-// ----x-----x-----x------x----------x------x-------x--------x----x-----x-----x------x----------x------x-------x--------x
-
 export class Diorama {
   constructor(container) {
     this.container = container;
@@ -46,44 +39,36 @@ export class Diorama {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearColor(CARD, 1); // the diorama runs full bleed, no white margins
+    this.renderer.setClearColor(CARD, 1); // full bleed, no white margins
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
 
-    // Cars are lit PBR meshes; everything else uses unlit basic material.
-    // Studio-style lighting: a bright hemisphere keeps the TTC livery even and clean with no
-    // blown-out specular on the glossy roof; one low, soft key from the camera side adds form
-    // without an overhead hotspot.
+    // Bright hemisphere keeps the red roof from blowing out.
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0xe7dfce, 3.0));
     const key = new THREE.DirectionalLight(0xffffff, 1.1);
-    key.position.set(-0.3, 0.7, 1.0); // low and front, so the red roof keeps its colour
+    key.position.set(-0.3, 0.7, 1.0); // low and front, keeps the roof colour
     this.scene.add(key);
 
-    // Orthographic camera keeps equal distances equal on screen — essential for a distance-true
-    // corridor — tilted down by a fixed elevation for a little depth.
+    // Ortho keeps equal distances equal on screen, which a distance-true corridor needs.
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 500, 6000);
     this.frustumH = 900;
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    // With real 3D car models, the reader can pan, zoom in to inspect a car, swing the camera to
-    // either side, and tilt from near top-down to almost side-on. Limits keep the line from
-    // flipping fully backwards; double-click anywhere snaps back to the editorial overview.
     this.controls.enablePan = true;
-    this.controls.screenSpacePanning = true; // pan in the view plane, which feels natural in 2.5D
-    this.controls.zoomToCursor = true; // zoom toward whatever the reader points at
-    this.controls.minZoom = 0.7; // a little room to pull back past the fitted whole-line view
-    this.controls.maxZoom = 12.0; // close enough to inspect a single car
-    this.controls.minPolarAngle = THREE.MathUtils.degToRad(12); // close to a top-down route map
-    this.controls.maxPolarAngle = THREE.MathUtils.degToRad(86); // down to an almost eye-level profile
-    this.controls.minAzimuthAngle = -Math.PI / 2; // swing a quarter turn to either side
+    this.controls.screenSpacePanning = true;
+    this.controls.zoomToCursor = true;
+    this.controls.minZoom = 0.7;
+    this.controls.maxZoom = 12.0;
+    this.controls.minPolarAngle = THREE.MathUtils.degToRad(12); // near top-down
+    this.controls.maxPolarAngle = THREE.MathUtils.degToRad(86); // near eye-level
+    this.controls.minAzimuthAngle = -Math.PI / 2; // a quarter turn each way
     this.controls.maxAzimuthAngle = Math.PI / 2;
     this.renderer.domElement.addEventListener("dblclick", () =>
       this.resetView(),
     );
-    // ----x-----x-----x------x----------x------x-------x--------x----x-----x-----x------x----------x------x-------x--------x
 
     this.cars = [];
     this.carsReady = false;
@@ -96,14 +81,14 @@ export class Diorama {
     this._up = new THREE.Vector3(0, 1, 0);
     this._v = new THREE.Vector3();
     this._v2 = new THREE.Vector3();
-    this._proj = new THREE.Vector3(); // scratch for projecting label anchors, reused every frame
+    this._proj = new THREE.Vector3(); // scratch for label anchors
 
     this._resizePending = false;
     this._resize();
     window.addEventListener("resize", () => this._queueResize());
   }
 
-  // coalesce a burst of resize events into one reflow per animation frame
+  // one reflow per animation frame
   _queueResize() {
     if (this._resizePending) return;
     this._resizePending = true;
@@ -120,18 +105,15 @@ export class Diorama {
 
     this._buildTransform(route);
     this.curve = this._buildCurve(route);
-    this._buildCarPath(); // a smoothed travel path so cars run straight while the ribbon stays real
+    this._buildCarPath();
 
     this._addRibbon();
     this._buildStops(route);
     this._frame();
   }
 
-  // Cars travel on their own smoothed path, separate from the ribbon. The ribbon follows the real
-  // route exactly, but a car tracking every GPS kink looks like it's swerving. The real curve is
-  // sampled evenly by arc length, the Spadina Crescent jog is straightened, and a light moving
-  // average removes the small lakeshore wobble while keeping the big shape — the lake corner and
-  // the bend into Union — intact. frame() reads position and heading off this path.
+  // Cars run on their own smoothed path so they do not swerve on GPS kinks; the ribbon
+  // keeps the real geometry.
   _buildCarPath() {
     const N = 600;
     const pts = [];
@@ -151,7 +133,6 @@ export class Diorama {
     return st ? st.s : null;
   }
 
-  // replace the car path between two arc-length fractions with a straight chord
   _straightenCarSpan(pts, N, s0, s1) {
     if (s0 == null || s1 == null) return;
     const i0 = Math.round(s0 * N),
@@ -169,7 +150,7 @@ export class Diorama {
     }
   }
 
-  // a clamped moving average over the sampled points, so the terminals stay anchored where they are
+  // clamped at the ends so the terminals stay anchored
   _smooth(pts, w) {
     const out = [];
     for (let i = 0; i < pts.length; i++) {
@@ -188,9 +169,7 @@ export class Diorama {
     return out;
   }
 
-  // Rotates the raw geometry so the Spadina leg points straight right, then scales and centres it.
-  // Everything else (ribbon, stops, cars) is built off this rotated, fitted curve so the
-  // projection lives in exactly one place.
+  // Rotate the Spadina leg onto +x, then scale and centre. Everything else builds off this.
   _buildTransform(route) {
     const a = route.stops[0]; // Spadina Station
     const b =
@@ -200,8 +179,7 @@ export class Diorama {
     const c = Math.cos(this.phi),
       s = Math.sin(this.phi);
     this._rot = (x, y) => [x * c - y * s, x * s + y * c];
-    // north is +y in the source projection; carry that direction through the same rotation and
-    // the z flip so the compass can point to true north no matter how the route is turned.
+    // carry north through the same rotation and z flip, for the compass
     this.northWorld = new THREE.Vector3(-s, 0, -c).normalize();
 
     let rxMin = Infinity,
@@ -220,8 +198,7 @@ export class Diorama {
     this.cy = (ryMin + ryMax) / 2;
   }
 
-  // Maps (x,y) in [0,1] to a point on the ground plane. Cross axis goes to -z so the lake
-  // end of the line recedes toward the top of the frame.
+  // Cross axis goes to -z so the lake end recedes.
   _toWorld(x, y) {
     const [rx, ry] = this._rot(x, y);
     return new THREE.Vector3(
@@ -231,8 +208,7 @@ export class Diorama {
     );
   }
 
-  // Subsamples the dense polyline then fits a centripetal Catmull-Rom through it, smoothing
-  // block-by-block GPS jitter into clean curves while keeping the real shape.
+  // Centripetal Catmull-Rom over a subsampled polyline, smoothing GPS jitter.
   _buildCurve(route) {
     const pts = [];
     const step = 5;
@@ -245,8 +221,7 @@ export class Diorama {
     return new THREE.CatmullRomCurve3(pts, false, "centripetal");
   }
 
-  // Right-of-way: a flat ribbon following the curve, with a thin centreline on top.
-  // Built as a triangle strip by offsetting each sampled point along the in-plane normal.
+  // Triangle strip, offset along the in-plane normal.
   _addRibbon() {
     this.scene.add(this._ribbonMesh(ROW_HALF, 0.0, ROW));
     this.scene.add(this._ribbonMesh(ROW_HALF * 0.06, 0.02, RAIL));
@@ -281,14 +256,11 @@ export class Diorama {
     );
   }
 
-  // Every stop is a flush disc on the band. Majors are inked and ringed; everyday stops are
-  // small and quiet; stops I'd consolidate are open red rings that fade in the proposal view.
-  // Each stop carries a floating name; the collision pass in _updateLabels keeps them legible.
-  // Name heights are staggered so neighbours on the straight Spadina leg clear each other.
+  // Name heights stagger so neighbours on the straight Spadina leg clear each other.
   _buildStops(route) {
     route.stops.forEach((st, i) => {
       const major = MAJORS.has(st.key);
-      // sit Union where the cars actually stop, short of the terminal loop, not at the loop's tip
+      // Union sits where cars stop, short of the loop tip
       const placeS = st.key === "union" ? UNION_STOP_S : st.s;
       const p = this.curve.getPointAt(Math.min(Math.max(placeS, 0), 1));
 
@@ -367,8 +339,7 @@ export class Diorama {
     this.sim = sim;
     this.runIndex = 0;
 
-    // size the pools to the busiest run in either scenario, since each loop swaps in a different
-    // run with its own number of cars
+    // size the pools to the busiest run in either scenario
     let most = 0;
     for (const key of ["today", "proposed"]) {
       for (const run of sim.scenarios[key].runs) {
@@ -376,7 +347,7 @@ export class Diorama {
       }
     }
 
-    // one soft blob shadow per car, oriented to its heading each frame
+    // one blob shadow per car
     for (let i = 0; i < most; i++) {
       const shadow = new THREE.Mesh(
         new THREE.PlaneGeometry(1, 1),
@@ -395,19 +366,26 @@ export class Diorama {
     this._loadCars(most);
   }
 
-  // Loads the Flexity model once, normalises it to a template centred on the track with wheels
-  // on the ground, then clones it for every car in the pool. Clones share geometry and materials
-  // so the whole fleet stays light despite being real 3D. Each frame, frame() assigns every car
-  // its position, heading and screen-locked scale.
+  // Load once, then clone per car. Clones share geometry and materials.
   _loadCars(count) {
-    new GLTFLoader().load(
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(
       MODEL_URL,
       (gltf) => {
         const inner = gltf.scene;
+
+        // No normals in the file; flatShading is required or the cars render black.
+        inner.traverse((o) => {
+          if (!o.isMesh) return;
+          for (const m of Array.isArray(o.material)
+            ? o.material
+            : [o.material]) {
+            m.flatShading = true;
+          }
+        });
+
         const box = new THREE.Box3().setFromObject(inner);
         const c = box.getCenter(new THREE.Vector3());
-        // re-origin so the wrapping group sits with its length centre over the track and its
-        // wheels on y = 0; the group itself is what I position, rotate and scale per frame
+        // centre on length, wheels at y = 0
         inner.position.set(-c.x, -box.min.y, -c.z);
         this.carBaseLen = box.max.x - box.min.x;
         this.carWidth = box.max.z - box.min.z;
@@ -424,8 +402,6 @@ export class Diorama {
         this.carsReady = true;
       },
       undefined,
-      // if the model 404s or the network drops, the cars would silently never appear; log it so
-      // the failure is at least visible in the console rather than a mystery
       (err) => console.error("Could not load the streetcar model:", err),
     );
   }
@@ -461,15 +437,12 @@ export class Diorama {
         const shadow = this.shadows[i];
         const veh = vehicles[i];
         const s = veh ? this._sAtTime(veh.keys, timeSec) : null;
-        // hide a car once it has reached Union, so it pulls in and vanishes rather than driving the
-        // tight terminal loop and appearing to spin around at the end of the line
+        // hide at Union, short of the terminal loop
         if (s === null || s > UNION_STOP_S) {
           car.visible = false;
           shadow.visible = false;
           continue;
         }
-        // position and heading come from the smoothed car path, not the ribbon, so cars run straight
-        // through the crescent and the lakeshore even though the ribbon keeps its real shape
         const ss = Math.min(Math.max(s, 0), 1);
         const idx = ss * this.carN;
         const i0 = Math.min(Math.floor(idx), this.carN - 1);
@@ -481,7 +454,6 @@ export class Diorama {
         const ahead = this.carPts[Math.min(i0 + 4, this.carN)];
         const behind = this.carPts[Math.max(i0 - 4, 0)];
 
-        // face the car down the smoothed tangent, keep it upright, and screen-lock its length
         const fwd = this._v
           .set(
             (ahead.x - behind.x) * NOSE_SIGN,
@@ -496,7 +468,7 @@ export class Diorama {
         car.scale.setScalar(scale);
         car.visible = true;
 
-        // a soft blob shadow under the car, elongated along its heading so it tracks every turn
+        // blob shadow, elongated along the heading
         const acrossUp = this._v2.set(fwd.z, 0, -fwd.x); // pairs with up so the plane faces the sky
         this._basis.makeBasis(fwd, acrossUp, this._up);
         shadow.quaternion.setFromRotationMatrix(this._basis);
@@ -512,8 +484,7 @@ export class Diorama {
     this._updateCompass();
   }
 
-  // Points the compass needle at true north by projecting the origin and a northward step into
-  // screen space, so the arrow stays correct even as the camera rotates.
+  // Project a northward step into screen space so the needle tracks camera rotation.
   _updateCompass() {
     if (!this.needleEl) return;
     const o = this._v.set(0, 0, 0).project(this.camera);
@@ -525,11 +496,8 @@ export class Diorama {
     this.needleEl.style.transform = `rotate(${deg}deg)`;
   }
 
-  // World length of a car, sized to read as TRAM_PX pixels at the default (zoom = 1) framing.
-  // Deliberately not divided by live zoom, so the car keeps a fixed world size: it grows as the
-  // reader zooms in and shrinks as they pull back, rather than being pinned to one pixel size.
-  // The frustum height (top - bottom) doesn't change with zoom on an orthographic camera, so
-  // this value only changes when the panel is resized.
+  // World length for TRAM_PX at zoom 1. Live zoom is deliberately excluded, so a car
+  // keeps a fixed world size and grows as the reader zooms in.
   _carWorldLen() {
     return (
       (TRAM_PX * (this.camera.top - this.camera.bottom)) /
@@ -568,8 +536,6 @@ export class Diorama {
     return tex;
   }
 
-  // Fit the whole route in the frame, then tilt the camera down. The orbit limits set in the
-  // constructor keep the reader inside a frame that always works.
   _frame() {
     this.controls.target.set(0, 0, 0);
     const dist = 3000;
@@ -579,7 +545,7 @@ export class Diorama {
     this.controls.update();
   }
 
-  // double-click handler: snap zoom, pan and angle back to the editorial overview after exploring
+  // snap back to the overview
   resetView() {
     this.camera.zoom = 1;
     this._frame();
@@ -611,8 +577,7 @@ export class Diorama {
       items.push(l);
     }
 
-    // greedy declutter: place the important names first (majors, then the drops), and hide or
-    // nudge any later name whose box would overlap one already placed.
+    // majors and drops are placed first; later names nudge up or hide
     items.sort((a, b) => b.priority - a.priority || a.sx - b.sx);
     const placed = [];
     const pad = 3;
@@ -671,10 +636,7 @@ export class Diorama {
     }
   }
 
-  // Frames the route and its labels exactly by projecting every must-stay-on-screen point into
-  // the tilted camera's view plane, computing that bounding box, and sizing the orthographic
-  // frustum to it for the current panel shape. The route fills the height; on a wide panel the
-  // leftover is horizontal, filled by the full-bleed ground colour with no empty white margin.
+  // Size the ortho frustum to the projected bounds of everything that must stay framed.
   _applyFit() {
     const w = this.container.clientWidth,
       h = this.container.clientHeight;
@@ -714,8 +676,7 @@ export class Diorama {
     this.camera.updateProjectionMatrix();
   }
 
-  // the points whose on-screen positions must stay framed: a sweep along the route plus every
-  // floating name, so the labels above the Union hook never clip.
+  // route sweep plus every label anchor
   _contentPoints() {
     const pts = [];
     for (let i = 0; i <= 24; i++) pts.push(this.curve.getPointAt(i / 24));

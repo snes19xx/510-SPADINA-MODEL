@@ -1,4 +1,4 @@
-/* The whole site is two stacked panels: the animation on top, the article below it.
+/* Two stacked panels: the animation on top, the article below.
    I keep the palette to ink on warm paper with one red and one green accent, hairline rules,
    and real type, so nothing on the page reads as a default theme. */
 
@@ -25,7 +25,7 @@ body {
   color: var(--ink);
 }
 
-/* The animation and the article stack vertically: the diorama owns the first screen at full
+/* The diorama owns the first screen at full
    width so the route and its labels get room to breathe, then the article scrolls in below. */
 .split {
   display: flex;
@@ -33,7 +33,6 @@ body {
   width: 100%;
 }
 
-/* Top panel: the animation, full width, one screen tall */
 .viz {
   display: flex;
   flex-direction: column;
@@ -43,7 +42,7 @@ body {
   background: var(--paper);
 }
 
-/* A compact masthead: a thin strip with the title and the dek tucked just under it, left
+/* Masthead: title with the dek tucked under it, left
    aligned, closed off by a hairline rule so the animation can start high on the page. */
 .viz-head {
   display: flex;
@@ -58,7 +57,6 @@ body {
   min-width: 0;
 }
 
-/* a quiet black-and-white link to the repo, parked top-right of the masthead */
 .ghlink {
   flex: none;
   display: inline-flex;
@@ -99,7 +97,6 @@ body {
   max-width: none;
 }
 
-/* the 3D scene fills the available height */
 .scene {
   position: relative;
   flex: 1 1 auto;
@@ -138,7 +135,6 @@ body {
   opacity: 0;
 }
 
-/* scenario toggle, top-left of the scene */
 .modepick {
   position: absolute;
   top: 14px;
@@ -168,7 +164,7 @@ body {
   background: var(--ink);
 }
 
-/* a minimal north arrow, parked in the open upper-left of the scene. scene.js rotates the
+/* North arrow. scene.js rotates the
    needle so it points to true north for the rotated route. */
 .compass {
   position: absolute;
@@ -179,8 +175,7 @@ body {
   opacity: 0.85;
   pointer-events: none;
 }
-/* the needle (with its N) rotates to true north and can swing past the small svg box; let it
-   draw outside rather than clipping the N on the left */
+/* the needle can swing past the svg box; let it draw outside so the N is not clipped */
 .compass svg {
   overflow: visible;
 }
@@ -196,7 +191,6 @@ body {
   fill: var(--ink);
 }
 
-/* transport control: a single quiet play/pause */
 .hud {
   display: flex;
   align-items: center;
@@ -230,7 +224,6 @@ body {
   margin: 10px 38px 26px;
 }
 
-/* Bottom panel: the article, isolated in its own scroll */
 .read {
   min-width: 0;
   height: 100vh;

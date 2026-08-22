@@ -1,8 +1,7 @@
 """Regenerate the webapp's data from the model.
 
-Run the full scenario set here and write the
-geometry plus a sample of genuine runs per scenario into the webapp, which the page then cycles
-through. 
+Runs the full scenario set and writes the geometry plus a sample of runs per scenario
+into assets/.
 """
 
 from __future__ import annotations

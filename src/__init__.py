@@ -40,16 +40,11 @@ from .monte_carlo import comparison_table, run_ensemble, run_scenarios, sensitiv
 from .simulation import Scenario, simulate
 
 __all__ = [
-    # submodules
     "config", "data", "geometry", "demand", "simulation", "interventions",
     "calibrate", "monte_carlo", "metrics", "viz", "export",
-    # constants
     "PALETTE", "PARAMS_DEFAULT", "SCENARIOS",
-    # corridor
     "Corridor", "Stop", "load_corridor", "stop_spacing",
-    # interventions
     "INTERVENTIONS", "scenarios", "spacing_summary",
-    # simulation and analysis
     "Scenario", "simulate", "run_calibration", "load_or_calibrate",
     "run_ensemble", "run_scenarios", "comparison_table", "sensitivity",
     "export_all",

@@ -44,10 +44,10 @@ ensemble; `export.py` writes `route.json` and `sim.json` into `assets/`.
 
 ```bash
 # 1. regenerate the webapp data from the model
-python notebooks/export_webapp.py
+python notebook/export_webapp.py
 
 # 2. rebuild and render the article that sits in the right-hand panel
-python notebooks/render_html.py
+python notebook/render_html.py
 
 # 3. serve the site from the repository root with any static server
 python -m http.server 8000
@@ -71,7 +71,9 @@ feed (route shapes and the schedule) and the TTC streetcar delay records.
 
 ## Acknowledgements
 
-### Special, special thanks to Jacob L.
+- Developed with assistance from Google Gemini 3.1 Pro/Flash for coding, debugging, and documentation.
+
+###### Special, special thanks to Jacob L.
 
 The 3D streetcar in the diorama is **not my work**. It is a Flexity Outlook model created by
 **Jacob L.** and published on SketchUp 3D Warehouse, and the project would not look the way it

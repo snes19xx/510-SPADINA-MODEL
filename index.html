@@ -7,14 +7,15 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles/main.css" />
 
-    <!-- I pull three and d3 straight from a CDN as ES modules, so the site is just static files
-       with no build step. The import map lets me write clean `import ... from "three"`. -->
+    <!-- Must stay above the modulepreloads: Firefox drops an import map that
+       arrives after the first module load has started. -->
     <script type="importmap">
       {
         "imports": {
@@ -24,11 +25,36 @@
         }
       }
     </script>
+
+    <!-- as="fetch" needs crossorigin even same-origin, or the credentials mode
+       mismatches and everything downloads twice. -->
+    <link
+      rel="modulepreload"
+      href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      crossorigin
+    />
+    <link
+      rel="modulepreload"
+      href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js"
+      crossorigin
+    />
+    <link
+      rel="modulepreload"
+      href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+      crossorigin
+    />
+    <link
+      rel="modulepreload"
+      href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/meshopt_decoder.module.js"
+      crossorigin
+    />
+    <link rel="preload" as="fetch" href="assets/route.json" crossorigin />
+    <link rel="preload" as="fetch" href="assets/sim.json" crossorigin />
+    <link rel="preload" as="fetch" href="assets/streetcar.glb" crossorigin />
   </head>
 
   <body>
     <main class="split">
-      <!-- Top: the animation -->
       <section class="viz">
         <div class="viz-head">
           <div class="viz-head-text">
@@ -64,7 +90,6 @@
             <button data-mode="today" class="active">Current</button>
             <button data-mode="proposed">Proposed</button>
           </div>
-          <!-- a small north arrow; scene.js rotates the needle to true north for the rotated route -->
           <div class="compass" aria-label="North">
             <svg viewBox="0 0 40 58" width="40" height="58">
               <g class="needle">
@@ -100,7 +125,6 @@
         ></svg>
       </section>
 
-      <!-- Below: the notebook, rendered as a clean article -->
       <aside class="read">
         <iframe
           src="notebook/510_spadina.html"

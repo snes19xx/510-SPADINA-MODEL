@@ -1,9 +1,6 @@
-"""Streetcar simulation where bunching emerges from the mechanics rather than being prescribed.
+"""Streetcar simulation. Travel times and bunching fall out of the corridor mechanics.
 
-Nothing here decides whether the line gets faster or more reliable. The corridor mechanics
-are modelled, and travel times and bunching fall out of those mechanics.
-
-Key structural fact: streetcars share a single track and cannot pass, so dispatch order is
+Streetcars share a single track and cannot pass, so dispatch order is
 arrival order at every stop. Vehicles are processed one at a time: when a car reaches a
 stop, the leader has already left, and the leader's departure time is the available gap.
 That gap times the boarding rate gives waiting riders, which sets the dwell, which amplifies
@@ -73,10 +70,9 @@ def _link_time(distance: float, vmax: float, accel: float, decel: float) -> floa
     """Time to drive one link, accelerating from rest and braking to rest.
 
     On a long enough link the car reaches its top speed and holds it (a trapezoidal speed
-    profile). On a short downtown block it runs out of room first and brakes before ever
-    reaching top speed (a triangular profile), so its average speed is far lower. This is
-    exactly why a string of 140 metre stops is so slow, and why widening the spacing buys
-    real time rather than just saving a dwell.
+    profile). On a short downtown block it brakes before ever reaching top speed (a
+    triangular profile), so its average speed is far lower. This is why a string of 140
+    metre stops is slow, and why widening the spacing buys real time on top of the dwell.
     """
     if distance <= 0:
         return 0.0
@@ -158,8 +154,7 @@ def simulate(corridor: Corridor, params: config.Params, scenario: Scenario,
     vmax = params.cruise_speed_kmh / 3.6
     target = params.target_headway_min * 60.0
 
-    # Clean (noise-free) driving time per link from the speed profile, computed once since
-    # values only depend on the stopping pattern, then jittered per car.
+    # Depends only on the stopping pattern, so compute once and jitter per car.
     base_link = np.array([_link_time(d, vmax, params.accel_mps2, params.decel_mps2)
                           for d in link_dist])
 
@@ -170,7 +165,6 @@ def simulate(corridor: Corridor, params: config.Params, scenario: Scenario,
     dep = np.zeros((V, K))
     load_max = np.zeros(V)
 
-    # State carried from the car ahead to the next car.
     prev_dep = np.full(K, np.nan)        # when the leader left each stop
     carryover = np.zeros(K)              # riders the leader could not fit, left waiting
 
@@ -184,25 +178,22 @@ def simulate(corridor: Corridor, params: config.Params, scenario: Scenario,
         for k in range(K):
             stop = stops[k]
 
-            # Running time on the link into this stop. The first "link" is the terminal
-            # itself, which costs nothing to reach.
+            # The first "link" is the terminal itself, which costs nothing to reach.
             if k > 0:
                 noise = rng.lognormal(mean=0.0, sigma=params.link_noise_cv)
                 t = dep[v, k - 1] + base_link[k] * noise
 
-            # No overtaking: a car cannot arrive before the leader has cleared this stop.
+            # No overtaking.
             leader_dep = prev_dep[k]
             if not np.isnan(leader_dep):
                 t = max(t, leader_dep + params.min_following_s)
 
             arr[v, k] = t
 
-            # Forward gap to the leader, the spacing this car is working with.
             gap = target if np.isnan(leader_dep) else (t - leader_dep)
             ratio = gap / target
             state = _headway_state(ratio, params)
 
-            # Alight first, then board whoever has piled up in the gap.
             alighting = dest[k]
             onboard -= alighting
             dest[k] = 0.0
@@ -215,17 +206,13 @@ def simulate(corridor: Corridor, params: config.Params, scenario: Scenario,
             onboard += boarding
             load_max[v] = max(load_max[v], onboard)
 
-            # Dwell: the door cycle every time, plus the per-rider service, stretched a
-            # little when the car is crowded.
+            # Door cycle, per-rider service, stretched when crowded.
             dwell = params.door_cycle_s + params.board_time_s * boarding + params.alight_time_s * alighting
             dwell *= 1.0 + params.crowd_dwell_factor * (onboard / params.capacity)
 
-            # Signals.
             dwell += _signal_delay(params, stop, scenario.tsp, state, rng)
 
-            # Headway holding: at a control point an early car is held just enough to restore
-            # the target gap, capped at holding_cap_s. The deadband avoids correcting trivial
-            # deviations, keeping the speed cost small while still catching real bunching.
+            # Deadband avoids correcting trivial deviations, keeping the speed cost small.
             if scenario.headway and stop.key in control_keys and not np.isnan(leader_dep):
                 hold = np.clip((target - gap) - params.holding_deadband_s, 0.0, params.holding_cap_s)
                 dwell += hold
@@ -233,8 +220,7 @@ def simulate(corridor: Corridor, params: config.Params, scenario: Scenario,
             dep[v, k] = arr[v, k] + dwell
             prev_dep[k] = dep[v, k]
 
-    # Headway regularity measured at Front St, downstream of both holding control points
-    # (College and King), so the detector sees the full effect of the intervention.
+    # Front St is downstream of both control points, so the detector sees the full effect.
     detector = next((i for i, st in enumerate(stops) if st.key == "front"), K // 2)
     return SimResult(
         scenario=scenario, stops=stops, stop_s=s, dispatch=dispatch, arr=arr, dep=dep,

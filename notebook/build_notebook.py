@@ -40,7 +40,7 @@ and the numbers can never drift apart.
 
 code(r"""
 %matplotlib inline
-# The analysis lives in ../src, so I make sure the project root is importable first.
+# Make the project root importable.
 import sys, pathlib
 _root = pathlib.Path.cwd()
 if not (_root / "src").exists():
@@ -201,9 +201,7 @@ code(r"""
 viz.scenario_dotplot(ensembles)
 
 rows = comparison_table(ensembles)
-# I report both change columns so that a positive number always means a better line: a car
-# that is faster, and a service that is more reliable. A drop in the headway CV is a gain in
-# reliability, so I flip its sign here rather than print a confusing negative.
+# Flip the CV sign so a positive number always means a better line.
 table = pd.DataFrame([{
     "Scenario": r["label"],
     "Travel time (min)": round(r["run_median"], 1),

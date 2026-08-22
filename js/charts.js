@@ -1,6 +1,5 @@
-// A single headline number under the animation, drawn with D3 (my one true love): the headway variability current
-// against the proposed line. Lower is more reliable. Keep the bar for whichever scenario is on
-// screen at full strength and dim the other.
+// Headway variability, current against proposed, drawn with D3 (my one true love).
+// The scenario on screen keeps full strength; the other dims.
 
 import * as d3 from "d3";
 

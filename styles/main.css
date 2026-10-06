@@ -2,6 +2,35 @@
    I keep the palette to ink on warm paper with one red and one green accent, hairline rules,
    and real type, so nothing on the page reads as a default theme. */
 
+@font-face {
+  font-family: "CMU Serif";
+  src: url("../fonts/cmunrm.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "CMU Serif";
+  src: url("../fonts/cmunti.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "CMU Serif";
+  src: url("../fonts/cmunbx.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "CMU Serif";
+  src: url("../fonts/cmunbi.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
   --paper: #faf8f3;
   --panel: #f3efe6;
@@ -10,8 +39,8 @@
   --rule: #ddd6c9;
   --today: #c71900;
   --proposed: #58793c;
-  --serif: "Newsreader", Georgia, "Times New Roman", serif;
-  --sans: "Inter", system-ui, -apple-system, sans-serif;
+  --serif: "CMU Serif", Georgia, "Times New Roman", serif;
+  --sans: "CMU Serif", Georgia, "Times New Roman", serif;
 }
 
 * {
@@ -37,7 +66,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  height: 100vh;
+  height: 80vh;
   border-bottom: 1px solid var(--rule);
   background: var(--paper);
 }
@@ -195,7 +224,7 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 38px 2px;
+  padding: 10px 38px 2px;
 }
 .play {
   font-family: var(--sans);
@@ -220,8 +249,8 @@ body {
 
 .metrics {
   width: calc(100% - 76px);
-  height: 104px;
-  margin: 10px 38px 26px;
+  height: 84px;
+  margin: 8px 38px 12px;
 }
 
 .read {
@@ -239,6 +268,6 @@ body {
    masthead so the title and dek do not fight for width */
 @media (max-width: 900px) {
   .viz {
-    height: 88vh;
+    height: 76vh;
   }
 }

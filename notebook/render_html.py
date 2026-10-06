@@ -24,10 +24,14 @@ CSS = """
   --accent: #b03a2e;
   --proposed: #2c6e63;
 }
+@font-face { font-family: "CMU Serif"; src: url("../fonts/cmunrm.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CMU Serif"; src: url("../fonts/cmunti.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CMU Serif"; src: url("../fonts/cmunbx.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "CMU Serif"; src: url("../fonts/cmunbi.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--paper); color: var(--ink); }
 body {
-  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-family: "CMU Serif", Georgia, "Times New Roman", serif;
   font-size: 18px;
   line-height: 1.68;
   -webkit-font-smoothing: antialiased;
@@ -35,7 +39,7 @@ body {
 .page { max-width: 1100px; margin: 0 auto; padding: 56px 48px 120px; }
 
 h1 {
-  font-family: "Source Serif 4", Georgia, serif;
+  font-family: "CMU Serif", Georgia, serif;
   font-weight: 500;
   font-size: 2.35rem;
   line-height: 1.12;
@@ -98,7 +102,7 @@ table.dataframe {
   border-collapse: collapse;
   margin: 1.8rem auto;
   width: 100%;
-  font-family: "Source Serif 4", Georgia, serif;
+  font-family: "CMU Serif", Georgia, serif;
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
 }
@@ -129,7 +133,7 @@ HEAD = """<!doctype html>
 <title>510 Spadina</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
 <style>%s</style>
 </head>
 <body><main class="page">%s</main></body>

@@ -3,7 +3,7 @@
 
 import * as d3 from "d3";
 
-const current = "#db1a1acb";
+const current = "#8c8475";
 const PROPOSED = "#4a6038";
 const INK = "#1a1a1a";
 const MUTED = "#6f6a60";
@@ -43,7 +43,7 @@ export class MetricsChart {
       .append("text")
       .attr("x", 0)
       .attr("y", 14)
-      .attr("font-family", "Inter, sans-serif")
+      .attr("font-family", "CMU Serif, Georgia, serif")
       .attr("font-size", 11)
       .attr("font-weight", 600)
       .attr("letter-spacing", "0.06em")
@@ -76,7 +76,7 @@ export class MetricsChart {
         .attr("x", 0)
         .attr("y", y + bandH / 2)
         .attr("dominant-baseline", "middle")
-        .attr("font-family", "Newsreader, Georgia, serif")
+        .attr("font-family", "CMU Serif, Georgia, serif")
         .attr("font-size", 14)
         .attr("fill", r.active ? INK : MUTED)
         .text(r.name);
@@ -93,7 +93,7 @@ export class MetricsChart {
         .attr("x", x(r.val) + 8)
         .attr("y", y + bandH / 2)
         .attr("dominant-baseline", "middle")
-        .attr("font-family", "Inter, sans-serif")
+        .attr("font-family", "CMU Serif, Georgia, serif")
         .attr("font-size", 12)
         .attr("font-weight", r.active ? 600 : 400)
         .attr("fill", r.active ? INK : MUTED)

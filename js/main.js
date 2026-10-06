@@ -30,7 +30,7 @@ async function main() {
   } catch (err) {
     console.error("Could not load the model output:", err);
     els.scene.innerHTML =
-      '<p style="font:14px/1.5 Inter,sans-serif;color:#6f6a60;padding:24px">' +
+      '<p style="font:14px/1.5 CMU Serif,Georgia,serif;color:#6f6a60;padding:24px">' +
       "The animation data could not be loaded. Please refresh the page.</p>";
     return;
   }
